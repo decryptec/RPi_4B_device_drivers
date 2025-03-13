@@ -31,6 +31,8 @@ gpiodetect
 
 ### **Find GPIO Offset:**  
 ```sh
+cd /sys/class/gpio/
+ls
 cat /sys/class/gpio/*chip*/label
 ```
 
