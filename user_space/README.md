@@ -1,5 +1,15 @@
-# A Simple User-Space GUI for interacting with Raspberry Pi 4b custom drivers
+# User-Space GUI for Raspberry Pi 4B Drivers
 
-## Built using Python Tkinter
+This project provides a simple GUI to interact with custom drivers on the Raspberry Pi 4B. It uses system calls for communication, making it lightweight and efficient.
 
-## Utilizing system calls
+## Features
+- GUI built with **Python Tkinter**.
+- Supports custom Raspberry Pi 4B drivers.
+- Uses **system calls** for driver interaction.
+
+## Requirements
+- **Raspberry Pi 4B** with a compatible OS.
+- **Python 3.8+** installed.
+- Install Python dependencies:
+  ```bash
+  pip install tk
