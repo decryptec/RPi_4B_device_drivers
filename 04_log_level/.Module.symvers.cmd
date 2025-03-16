@@ -1,1 +1,0 @@
-savedcmd_/home/donh/linux_drivers/linux_drivers/04_log_level/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/donh/linux_drivers/linux_drivers/04_log_level/Module.symvers -T /home/donh/linux_drivers/linux_drivers/04_log_level/modules.order -i Module.symvers -e 
