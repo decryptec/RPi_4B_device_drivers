@@ -62,4 +62,4 @@ module_exit(my_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Decryptec");
-MODULE_DESCRIPTION("Hello world driver via character device");
+MODULE_DESCRIPTION("A read and write hello world via char device");
