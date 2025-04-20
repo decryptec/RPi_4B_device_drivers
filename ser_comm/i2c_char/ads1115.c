@@ -14,6 +14,15 @@
 #define ADS1115_ADDR 0x48
 #define ADS1115_NAME "ADS1115"
 
+// ADS1115 Configuration Macros
+#define ADS1115_OS_SINGLE        0x8000
+#define ADS1115_MUX_AIN0         0x4000 // AIN0 vs GND
+#define ADS1115_MUX_SHIFT        12
+#define ADS1115_PGA_6_144V       0x0000
+#define ADS1115_MODE_SINGLE      0x0100
+#define ADS1115_DR_128SPS        0x0080
+#define ADS1115_COMP_DISABLE     0x0003
+
 static struct i2c_adapter *ads_i2c_adapter = NULL;
 static struct i2c_client *ads_i2c_client = NULL;
 
@@ -22,7 +31,7 @@ static struct class *my_class;
 static struct cdev my_device;
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Don Modified");
+MODULE_AUTHOR("Decryptec");
 MODULE_DESCRIPTION("Char driver for ADS1115 16-bit ADC");
 MODULE_SUPPORTED_DEVICE("none");
 
@@ -48,8 +57,12 @@ static int ads1115_read_channel(int channel) {
     u16 raw;
     int ret;
 
-    // Base config: single-shot, 128SPS, single-ended, FSR ±6.144V
-    config = 0x8000 | (0x4000 + (channel << 12)) | 0x0083;
+    // Build config register for single-shot conversion on selected channel
+    config = ADS1115_OS_SINGLE |
+             ((channel & 0x07) << ADS1115_MUX_SHIFT) |
+             ADS1115_MODE_SINGLE |
+             ADS1115_DR_128SPS |
+             ADS1115_COMP_DISABLE;
 
     // Write config to start conversion
     i2c_smbus_write_word_data(ads_i2c_client, 0x01, swab16(config));
@@ -58,9 +71,9 @@ static int ads1115_read_channel(int channel) {
     ret = i2c_smbus_read_word_data(ads_i2c_client, 0x00);
     if (ret < 0) return ret;
 
-    raw = swab16(ret); // ADS1115 sends MSB first
+    raw = swab16(ret); // ADS1115 sends MSB first, so swap bytes
 
-    return (s16)raw; // Convert to signed
+    return (s16)raw; // Convert to signed 16-bit
 }
 
 static ssize_t driver_read(struct file *File, char *user_buffer, size_t count, loff_t *offs) {
