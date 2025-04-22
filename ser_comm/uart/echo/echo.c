@@ -5,6 +5,8 @@
 #include <linux/of_device.h>
 #include <linux/serdev.h>
 
+#define MAX_BUFFER_SIZE 256
+
 static int ser_echo_probe(struct serdev_device *serdev);
 static void ser_echo_remove(struct serdev_device *serdev);
 
@@ -16,8 +18,27 @@ MODULE_DEVICE_TABLE(of, ser_echo_ids);
 
 static int serdev_echo_recv(struct serdev_device *serdev, const unsigned char *buffer, size_t size)
 {
-    pr_info("echo - Received %ld bytes with \"%s\"\n", size, buffer);
-    return serdev_device_write_buf(serdev, buffer, size);
+    static char rx_buffer[MAX_BUFFER_SIZE];
+    static size_t rx_index = 0;
+
+    size_t i;
+    for (i = 0; i < size; i++) {
+        if (rx_index < MAX_BUFFER_SIZE - 1) {
+            char c = buffer[i];
+            rx_buffer[rx_index++] = c;
+
+            if (c == '\n') {
+                rx_buffer[rx_index - 1] = '\0'; // Replace '\n' with null terminator
+                pr_info("echo - Received message: %s\n", rx_buffer);
+		rx_index = 0;
+            }
+        } else {
+            pr_warn("echo - Buffer overflow, resetting\n");
+            rx_index = 0;
+        }
+    }
+
+    return serdev_device_write_buf(serdev, buffer, size); // optional echo back
 }
 
 static const struct serdev_device_ops ser_echo_ops = {
