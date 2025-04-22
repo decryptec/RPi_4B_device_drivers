@@ -10,7 +10,7 @@ static int dt_remove(struct platform_device *pdev);
 
 static const struct of_device_id my_driver_ids[] = {
     {
-        .compatible = "decryptec,mydev",  // ❗ Remove space after comma
+        .compatible = "decryptec,mydev",  
     },
     {} // sentinel
 };
