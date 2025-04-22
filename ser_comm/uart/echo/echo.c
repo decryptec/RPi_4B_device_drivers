@@ -4,6 +4,7 @@
 #include <linux/property.h>
 #include <linux/of_device.h>
 #include <linux/serdev.h>
+#include <linux/delay.h>  // for msleep()
 
 #define MAX_BUFFER_SIZE 256
 
@@ -28,9 +29,9 @@ static int serdev_echo_recv(struct serdev_device *serdev, const unsigned char *b
             rx_buffer[rx_index++] = c;
 
             if (c == '\n') {
-                rx_buffer[rx_index - 1] = '\0'; // Replace '\n' with null terminator
+                rx_buffer[rx_index - 1] = '\0'; // Terminate string
                 pr_info("echo - Received message: %s\n", rx_buffer);
-		rx_index = 0;
+                rx_index = 0;
             }
         } else {
             pr_warn("echo - Buffer overflow, resetting\n");
@@ -38,7 +39,7 @@ static int serdev_echo_recv(struct serdev_device *serdev, const unsigned char *b
         }
     }
 
-    return serdev_device_write_buf(serdev, buffer, size); // optional echo back
+    return serdev_device_write_buf(serdev, buffer, size); // echo back (optional)
 }
 
 static const struct serdev_device_ops ser_echo_ops = {
@@ -55,15 +56,22 @@ static int ser_echo_probe(struct serdev_device *serdev)
 
     status = serdev_device_open(serdev);
     if (status) {
-        pr_err("echo - Error opening serial port\n");
+        pr_err("echo - Error opening serial port (%d)\n", status);
         return -status;
     }
 
-    pr_info("echo - Configuring UART settings\n");
+    pr_info("echo - Configuring UART\n");
 
     serdev_device_set_baudrate(serdev, 115200);
     serdev_device_set_flow_control(serdev, false);
     serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
+
+    msleep(100); // Allow Arduino time to boot/reset
+
+    // Send initial command
+    const char* ON_cmd = "ON\n";
+    int bytes_sent = serdev_device_write_buf(serdev, ON_cmd, strlen(ON_cmd));
+    pr_info("echo - Sent LED_ON (%d bytes)\n", bytes_sent);
 
     return 0;
 }
@@ -71,6 +79,11 @@ static int ser_echo_probe(struct serdev_device *serdev)
 static void ser_echo_remove(struct serdev_device *serdev)
 {
     pr_info("echo - Remove called\n");
+
+    const char* OFF_cmd = "OFF\n";
+    int bytes_sent = serdev_device_write_buf(serdev, OFF_cmd, strlen(OFF_cmd));
+    pr_info("echo - Sent LED_OFF (%d bytes)\n", bytes_sent);
+
     serdev_device_close(serdev);
 }
 
@@ -87,9 +100,10 @@ static int __init my_init(void)
 {
     pr_info("echo - Loading driver\n");
 
-    if (serdev_device_driver_register(&serdev_device_driver)) {
-        pr_err("echo - Could not load driver\n");
-        return -1;
+    int ret = serdev_device_driver_register(&serdev_device_driver);
+    if (ret) {
+        pr_err("echo - Could not load driver (%d)\n", ret);
+        return ret;
     }
 
     pr_info("echo - Driver loaded successfully\n");
@@ -107,5 +121,4 @@ module_exit(my_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Decryptec");
-MODULE_DESCRIPTION("Repeat back driver of UART port");
-
+MODULE_DESCRIPTION("UART Echo + LED Toggle Driver for Arduino");
