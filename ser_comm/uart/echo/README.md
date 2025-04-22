@@ -1,39 +1,29 @@
-# Device Tree Overlay + Kernel Module Demo
+# UART Button State Receiver (Arduino to Raspberry Pi 4B via serdev)
 
-This project demonstrates how to:
+This project demonstrates a custom Linux kernel module using the `serdev` API to receive UART messages from an Arduino. When the button on the Arduino is pressed or released, it sends `BUTTON_PRESSED` or `BUTTON_RELEASED` over UART. The Raspberry Pi 4B captures and logs these messages using a kernel module.
 
-- Compile a device tree overlay (`test_overlay.dts`)
-- Load it using `dtoverlay`
-- View it under `/proc/device-tree/`
-- Test a kernel module that reads from the overlay
+---
 
-## Steps
+## 🔧 Setup (Single Command Flow)
 
-1. Compile the device tree overlay:
+```bash
+# 1. Copy Device Tree Overlay
+sudo cp uart_Overlay.dtbo /boot/overlays/
 
-dtc -@ -I dts -O dtb -o test_overlay.dtbo test_overlay.dts
+# 2. Enable UART interface
+sudo raspi-config
+# → Interface Options → Serial Port
+# → Login shell: No
+# → Serial port hardware: Yes
 
-2. Load the overlay:
+# 3. Edit boot config to apply overlay
+sudo vim /boot/firmware/config.txt
+# Add this line:
+dtoverlay=uart_Overlay
 
-sudo dtoverlay test_overlay.dtbo
+# 4. Reboot to apply changes
+sudo reboot now
 
-3. View the loaded overlay in the device tree:
-
-ls /proc/device-tree/my_device/
-
-4. Read individual properties from the overlay:
-
-sudo cat /proc/device-tree/my_device/label
-
-5. Compile the kernel module:
-
-make
-
-6. Insert the kernel module:
-
-sudo insmod dev_tree_test.ko
-
-7. Check dmesg for output:
-
-dmesg | tail
-
+# 5. Insert the kernel module and watch logs
+sudo insmod echo.ko
+sudo dmesg -W
