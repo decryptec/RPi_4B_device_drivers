@@ -54,7 +54,7 @@ static int __init my_init(void)
         return status;
     }
 
-    my_class = class_create(THIS_MODULE, "my_class");
+    my_class = class_create("my_class");
     if (IS_ERR(my_class)) {
         pr_err("sysfs - Error creating class\n");
         status = PTR_ERR(my_class);
